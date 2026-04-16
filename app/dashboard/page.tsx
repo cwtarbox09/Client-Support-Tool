@@ -9,7 +9,7 @@ import {
   ShieldAlert,
 } from "lucide-react"
 
-import { authOptions } from "@/lib/auth"
+import { getAuthOptions } from "@/lib/auth"
 import { fetchOverviewData } from "@/lib/graph"
 import { formatNumber, getUsagePercent } from "@/lib/utils"
 
@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(getAuthOptions())
 
   if (!session) {
     redirect("/login")
