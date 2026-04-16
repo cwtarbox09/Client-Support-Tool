@@ -1,12 +1,14 @@
 import NextAuth from "next-auth"
 import { getAuthOptions } from "@/lib/auth"
 
-// Build a fresh handler on each request so config file changes are
-// picked up immediately after the setup wizard completes.
+// Create a new handler per request so setup-time config changes are picked up
+// without restarting the dev server.
 export async function GET(req: Request, ctx: { params: { nextauth: string[] } }) {
-  return NextAuth(req as Parameters<typeof NextAuth>[0], ctx as Parameters<typeof NextAuth>[1], getAuthOptions())
+  const handler = NextAuth(getAuthOptions())
+  return handler(req, ctx)
 }
 
 export async function POST(req: Request, ctx: { params: { nextauth: string[] } }) {
-  return NextAuth(req as Parameters<typeof NextAuth>[0], ctx as Parameters<typeof NextAuth>[1], getAuthOptions())
+  const handler = NextAuth(getAuthOptions())
+  return handler(req, ctx)
 }
