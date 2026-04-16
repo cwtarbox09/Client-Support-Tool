@@ -5,6 +5,32 @@ import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, Shield } from "lucide-react"
 
+function getSafeCallbackUrl(rawCallbackUrl: string | null) {
+  if (!rawCallbackUrl) return "/dashboard"
+
+  try {
+    const decoded = decodeURIComponent(rawCallbackUrl)
+    const parsed = new URL(decoded, typeof window !== "undefined" ? window.location.origin : "http://localhost")
+    const pathWithQuery = `${parsed.pathname}${parsed.search}`
+
+    // Never route back to OAuth callback/error endpoints, and avoid replaying stale code/state params.
+    if (
+      parsed.pathname.startsWith("/api/auth/") ||
+      parsed.searchParams.has("code") ||
+      parsed.searchParams.has("state")
+    ) {
+      return "/dashboard"
+    }
+
+    // Keep callback URLs internal-only.
+    if (!parsed.pathname.startsWith("/")) return "/dashboard"
+
+    return pathWithQuery || "/dashboard"
+  } catch {
+    return "/dashboard"
+  }
+}
+
 function LoginContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -12,7 +38,7 @@ function LoginContent() {
   const [isSigningIn, setIsSigningIn] = useState(false)
 
   const error = searchParams.get("error")
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard"
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"))
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -21,6 +47,7 @@ function LoginContent() {
   }, [status, router, callbackUrl])
 
   const handleSignIn = async () => {
+    if (isSigningIn) return
     setIsSigningIn(true)
     await signIn("azure-ad", { callbackUrl })
   }
